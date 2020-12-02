@@ -2,7 +2,7 @@
 
 
 
-set incs= -DWIN32 -Izlib -DWINDOWS 
+set incs=-DNDEBUG -DWIN32 -Izlib -DWINDOWS 
 
 set opts= -fomit-frame-pointer 
 rem -fno-stack-protector -fno-stack-check -fno-check-new

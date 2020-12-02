@@ -547,7 +547,7 @@ which computes 8 elements at a time, is not any faster).
 
 */
 
-#define PROGNAME "paq8pxd90fix2"  // Please change this if you change the program.
+#define PROGNAME "paq8pxd90fix3"  // Please change this if you change the program.
 #define SIMD_GET_SSE  //uncomment to use SSE2 in ContexMap
 #define MT            //uncomment for multithreading, compression only
 #define SIMD_CM_R       // SIMD ContextMap byterun
@@ -9042,7 +9042,7 @@ class jpegModelx: public Model {
    const int N; // size of t, number of contexts
    Array<U64> cxt;  // context hashes
    Mixer m1;
-   APM apm[26];
+   APM apm[28-1];
    BlockData& x;
    Buf& buf;
    IndirectMap MJPEGMap;
@@ -9065,9 +9065,9 @@ public:
   hbuf(2048),color(10), pred(4), dc(0),width(0), row(0),column(0),cbuf(0x20000),
   cpos(0), rs1(0), ssum(0), ssum1(0), ssum2(0), ssum3(0),cbuf2(0x20000),adv_pred(4), run_pred(6),
   sumu(8), sumv(8), ls(10),lcp(7), zpos(64), blockW(10), blockN(10),  SamplingFactors(4),dqt_state(-1),dqt_end(0),qnum(0),pr0(0),
-  qtab(256),qmap(10),N(41),cxt(N),m1(32+32+3+4+1+1+1+1+1+N*2+1,2050+3+1024+64+1024 /*770*/,bd, 3+1+1,0,3,2),
+  qtab(256),qmap(10),N(53+4+4+14+1+1),cxt(N),m1(32+32+3+4+1+1+1+1+1+N*2+1,2050+3+1024+64+1024+(2048*4)+2048 /*770*/,bd, 3+1+1+4+1,0,3,2),
    apm{{0x40000,20-4},{0x40000,20-4},{0x20000,20-4},
-   {0x20000,20-4},{0x20000,20-4},{0x20000,20-4},{0x20000,20-4},{0x20000,27},{0x20000,27},{0x20000,27},{0x20000,27},{0x20000,27},{0x20000,27},{0x20000,27} ,{0x20000,27},{0x20000,27},{0x20000,27},{0x20000,27},{0x20000,27},{0x20000,27},{0x20000,27},{0x20000,27},{0x20000,27},{0x20000,27},{0x20000,27},{0x20000,27} },
+   {0x20000,20-4},{0x20000,20-4},{0x20000,20-4},{0x20000,20-4},{0x20000,27},{0x20000,27},{0x20000,27},{0x20000,27},{0x20000,27},{0x20000,27},{0x20000,27} ,{0x20000,27},{0x20000,27},{0x20000,27},{0x20000,27},{0x20000,27},{0x20000,27},{0x20000,27},{0x20000,27},{0x20000,27},{0x20000,27},{0x20000,27},{0x20000,27},{0x20000,27} },
    x(bd),buf(bd.buf),MJPEGMap( {21, 3, 128, 127}),
   hbcount(2),prev_coef(0),prev_coef2(0), prev_coef_rs(0), rstpos(0),rstlen(0),
   hmap(level>11?0x10000000:(CMlimit(MEM()*2)),9,N,bd),skip(0), smx(256*256),smx1(0x4000),jmiss(0),zux(0),ccount(0) {
@@ -9560,49 +9560,99 @@ public:
   zux=zux<<2;zux|=(zu>0)*2|zv>0;
     if (hbcount==0) {
     U32 n=hc*N;
-    cxt[0]=hash(++n, coef, adv_pred[2]/12+(run_pred[2]<<8), ssum2>>6, prev_coef/72);
-    cxt[1]=hash(++n, coef, adv_pred[0]/12+(run_pred[0]<<8), ssum2>>6, prev_coef/72);
-    cxt[2]=hash(++n, coef, adv_pred[1]/11+(run_pred[1]<<8), ssum2>>6);
-    cxt[3]=hash(++n, rs1, adv_pred[2]/7, run_pred[5]/2, prev_coef/10);
-    cxt[4]=hash(++n, rs1, adv_pred[0]/7, run_pred[3]/2, prev_coef/10);
-    cxt[5]=hash(++n, rs1, adv_pred[1]/11, run_pred[4]);
-    cxt[6]=hash(++n, adv_pred[2]/14, run_pred[2], adv_pred[0]/14, run_pred[0]);
-    cxt[7]=hash(++n, cbuf[cpos-blockN[mcupos>>6]]>>4, adv_pred[3]/17, run_pred[1], run_pred[5]);
-    cxt[8]=hash(++n, cbuf[cpos-blockW[mcupos>>6]]>>4, adv_pred[3]/17, run_pred[1], run_pred[3]);
-    cxt[9]=hash(++n, lcp[0]/22, lcp[1]/22, adv_pred[1]/7, run_pred[1]);
-    cxt[10]=hash(++n, lcp[0]/22, lcp[1]/22, mcupos&63, lcp[4]/30);
-    cxt[11]=(zu)==0?hash(++n, prev_coef/22,prev_coef2/50):hash(++n, zu/2, lcp[0]/13, lcp[2]/30);//run_pred[2]
-    cxt[12]=(zv)==0?hash(++n, ssum2>>5, mcupos&63):hash(++n, zv/2, lcp[1]/13, lcp[3]/30);
-    cxt[13]=hash(++n, rs1, prev_coef/42, prev_coef2/34,  lcp[0]/(ccount>2?12:60),lcp[2]/14,lcp[1]/(ccount>2?12:60),lcp[3]/14 );
-    cxt[14]=hash(++n, mcupos&63, column>>1);
-    cxt[15]=hash(++n, column>>3, min(5+2*(!comp),zu+zv), lcp[0]/10,lcp[2]/40,lcp[1]/10,lcp[3]/40 );
-    cxt[16]=hash(++n, ssum>>3, mcupos&63);
-    cxt[17]=hash(++n, rs1, mcupos&63, run_pred[1]);
-    cxt[18]=hash(++n, coef, ssum2>>5, adv_pred[3]/30, (comp)?hash(prev_coef/22,prev_coef2/50):ssum/((mcupos&0x3F)+1));
-    cxt[19]=hash(++n, lcp[0]/40, lcp[1]/40, adv_pred[1]/28,   (comp)?prev_coef/40+((prev_coef2/40)<<20):lcp[4]/22, min(7,zu+zv), ssum/(2*(zu+zv)+1)   );
-    cxt[20]=hash(++n, ccount>1?((zv<<8)|zu):zv , cbuf[cpos-blockN[mcupos>>6]], adv_pred[2]/28, run_pred[2]);//use (zv<<8)|zu for subsampling
-    cxt[21]=hash(++n, ccount>1?((zv<<8)|zu):zu, cbuf[cpos-blockW[mcupos>>6]], adv_pred[0]/28, run_pred[0]);
-    cxt[22]=hash(n, adv_pred[2]/7, run_pred[2]);
-    cxt[23]=hash(n, adv_pred[0]/7, run_pred[0],ccount>2?(lcp[zu<zv]/14):-1);
-    cxt[24]=hash(n, adv_pred[1]/7, run_pred[1],ccount>2?(lcp[zu<zv]/14):-1);
-    cxt[25]=hash(++n,  ccount>1?((zv<<8)|zu):zv , lcp[1]/14, adv_pred[2]/16, run_pred[5]);
-    cxt[26]=hash(++n,  ccount>1?((zv<<8)|zu):zu, lcp[0]/14, adv_pred[0]/16, run_pred[3]);
-    cxt[27]=hash(++n, lcp[0]/14, lcp[1]/14, adv_pred[3]/16);
-    cxt[28]=hash(++n, coef, prev_coef/10, prev_coef2/20);
-    cxt[29]=hash(++n, coef, ssum>>2, prev_coef_rs);
-    cxt[30]=hash(++n, coef, adv_pred[1]/17,  lcp[(zu<zv)]/24,lcp[2]/20,lcp[3]/24 );
-    cxt[31]=hash(++n, coef, adv_pred[3]/11,  lcp[(zu<zv)]/(ccount>2?10:50),lcp[2+3*(zu*zv>1)]/(ccount>2?10:50),lcp[3+3*(zu*zv>1)]/(ccount>2?10:50) );
-    cxt[32]=hash(++n,  coef, adv_pred[2]/17 , coef, adv_pred[1]/11 , ssum>>2,run_pred[0]);
-    cxt[33]=hash(++n,  ccount>1?zux:-1,zv, run_pred[2]/2 ,  coef, run_pred[5]/2 , min(7,zu+zv),adv_pred[0]/12);
-    cxt[34]=hash(++n, coef, adv_pred[2]/17,  lcp[(zu<zv)]/24,lcp[2]/20,lcp[3]/24 );
-    cxt[35]=hash(hc,ccount>1?((zv<<8)|zu):zu,cbuf[cpos-blockN[mcupos>>6]], adv_pred[2]/28, run_pred[2],lcp[1]/14/* art*/ ,    adv_pred[0]/28, run_pred[0],lcp[4]/14/*art*/ ) ;
-    cxt[36]=hash(++n, (zv<<8)|zu, lcp[0]/22, lcp[4]/30, ssum2>>6,prev_coef/28 ,  adv_pred[0]/30, adv_pred[1]/30,adv_pred[2]/30 ,  run_pred[0], run_pred[1],run_pred[2] );
-    cxt[37]=hash(++n,hc, adv_pred[3] / 13, prev_coef / 11, static_cast<int>(zu + zv < 4));
-    cxt[38]=hash(++n, lcp[1]/22, lcp[2]/22, adv_pred[2]/7, run_pred[2],ccount>1?(lcp[4]/14):-1);
-    cxt[39]=hash(++n, lcp[0]/22, lcp[1]/22, lcp[4]/22, mcupos&63, lcp[3]/30);
-    cxt[40]=hash(++n, coef, adv_pred[0]/11,  lcp[(zu<zv)]/(ccount>2?10:(ccount>1?25:50)),lcp[2+3*(zu*zv>1)]/(ccount>2?10:(ccount>1?25:50)),lcp[3+3*(zu*zv>1)]/(ccount>2?10:(ccount>1?25:50)) );//10 art
+        int i = 0;
+
+    cxt[i++]=hash(++n, coef, adv_pred[2]/12+(run_pred[2]<<8), ssum2>>6, prev_coef/72);
+    cxt[i++]=hash(++n, coef, adv_pred[0]/12+(run_pred[0]<<8), ssum2>>6, prev_coef/72);
+    cxt[i++]=hash(++n, coef, adv_pred[3]/12+(run_pred[3]<<8), ssum2>>6, prev_coef/72);
+    cxt[i++]=hash(++n, coef, adv_pred[1]/11+(run_pred[1]<<8), ssum2>>6);
+    cxt[i++] = hash(++n, coef, lcp[0] / 12 + (run_pred[0] << 8), ssum2 >> 6, prev_coef / 72);
+    cxt[i++]=hash(++n, rs1, adv_pred[2]/7, run_pred[5]/2, prev_coef/10);
+    cxt[i++]=hash(++n, rs1, adv_pred[0]/7, run_pred[3]/2, prev_coef/10);
+    cxt[i++]=hash(++n, rs1, adv_pred[1]/11, run_pred[4]);
+    cxt[i++] = hash(++n, coef, rs, adv_pred[0] / 11);//
+    cxt[i++] = hash(++n, coef, rs, adv_pred[1] / 11);
+    cxt[i++] = hash(++n, coef, rs, adv_pred[2] / 11);
+    cxt[i++] = hash(++n, coef, rs, adv_pred[3] / 11);
+    cxt[i++]=hash(++n, adv_pred[2]/14, run_pred[2], adv_pred[0]/14, run_pred[0]);  
+    cxt[i++] = hash(++n, adv_pred[3] / 14, run_pred[3], adv_pred[1] / 14, run_pred[1]);// 
+    cxt[i++]=hash(++n, cbuf[cpos-blockN[mcupos>>6]]>>4, adv_pred[3]/17, run_pred[1], run_pred[5]);
+    cxt[i++]=hash(++n, cbuf[cpos-blockW[mcupos>>6]]>>4, adv_pred[3]/17, run_pred[1], run_pred[3]);
+    cxt[i++]=hash(++n, lcp[0]/22, lcp[1]/22, adv_pred[1]/7, run_pred[1]);
+    cxt[i++]=hash(++n, lcp[0]/22, lcp[1]/22, mcupos&63, lcp[4]/30);
+    cxt[i++] = hash(++n, lcp[1] / 22, lcp[2] / 22, mcupos & 63U, lcp[3] / 30);
+    cxt[i++] = hash(++n, lcp[2] / 22, lcp[3] / 22, mcupos & 63U, lcp[2] / 30);
+    cxt[i++] = hash(++n, lcp[0] / 22, lcp[1] / 22, column, lcp[4] / 30);
+    cxt[i++]=(zu)==0?hash(++n, prev_coef/22,prev_coef2/50):hash(++n, zu/2, lcp[0]/13, lcp[2]/30);//run_pred[2]
+    cxt[i++]=(zv)==0?hash(++n, ssum2>>5, mcupos&63):hash(++n, zv/2, lcp[1]/13, lcp[3]/30);
+    cxt[i++]=hash(++n, rs1, prev_coef/42, prev_coef2/34,  lcp[0]/(ccount>2?12:60),lcp[2]/14,lcp[1]/(ccount>2?12:60),lcp[3]/14 );
+    cxt[i++] = hash(++n, rs1, prev_coef / 42, prev_coef2 / 34, lcp[2] / 60, lcp[4] / 14, lcp[1] / 60, lcp[3] / 14);//
+
+    cxt[i++]=hash(++n, mcupos&63, column>>1);
+    cxt[i++] = hash(++n, mcupos & 63U, ssum2 >> 1);
+
+    cxt[i++]=hash(++n, column>>3, min(5+2*(!comp),zu+zv), lcp[0]/10,lcp[2]/40,lcp[1]/10,lcp[3]/40 );
+    cxt[i++]=hash(++n, ssum>>3, mcupos&63);
+    cxt[i++]=hash(++n, rs1, mcupos&63, run_pred[1]);
+    cxt[i++]=hash(++n, coef, ssum2>>5, adv_pred[3]/30, (comp)?hash(prev_coef/22,prev_coef2/50):ssum/((mcupos&0x3F)+1));
+    cxt[i++]=hash(++n, lcp[0]/40, lcp[1]/40, adv_pred[1]/28,   (comp)?prev_coef/40+((prev_coef2/40)<<20):lcp[4]/22, min(7,zu+zv), ssum/(2*(zu+zv)+1)   );
+    cxt[i++]=hash(++n, ccount>1?((zv<<8)|zu):zv , cbuf[cpos-blockN[mcupos>>6]], adv_pred[2]/28, run_pred[2]);//use (zv<<8)|zu for subsampling
+    cxt[i++]=hash(++n, ccount>1?((zv<<8)|zu):zu, cbuf[cpos-blockW[mcupos>>6]], adv_pred[0]/28, run_pred[0]);
+    cxt[i++]=hash(n, adv_pred[2]/7, run_pred[2]);
+    cxt[i++]=hash(n, adv_pred[0]/7, run_pred[0],ccount>2?(lcp[zu<zv]/14):-1);
+    cxt[i++]=hash(n, adv_pred[1]/7, run_pred[1],ccount>2?(lcp[zu<zv]/14):-1);
+    cxt[i++]=hash(++n,  ccount>1?((zv<<8)|zu):zv , lcp[1]/14, adv_pred[2]/16, run_pred[5]);
+    cxt[i++]=hash(++n,  ccount>1?((zv<<8)|zu):zu, lcp[0]/14, adv_pred[0]/16, run_pred[3]);
+    cxt[i++]=hash(++n, lcp[0]/14, lcp[1]/14, adv_pred[3]/16);
+    cxt[i++]=hash(++n, coef, prev_coef/10, prev_coef2/20);
+    cxt[i++]=hash(++n, coef, ssum>>2, prev_coef_rs);
+    cxt[i++]=hash(++n, coef, adv_pred[1]/17,  lcp[(zu<zv)]/24,lcp[2]/20,lcp[3]/24 );
+
+    cxt[i++] = hash(++n, hc, coef, adv_pred[3] / 11, lcp[static_cast<uint64_t>(zu < zv)] / 50, lcp[2 + 3 * static_cast<uint64_t>(zu * zv > 1)] / 50,
+      lcp[3 + 3 * static_cast<uint64_t>(zu * zv > 1)] / 50);
+
+ 
+    cxt[i++]=hash(++n,  coef, adv_pred[2]/17 , coef, adv_pred[1]/11 , ssum>>2,run_pred[0]);
+    cxt[i++]=hash(++n,  ccount>1?zux:-1,zv, run_pred[2]/2 ,  coef, run_pred[5]/2 , min(7,zu+zv),adv_pred[0]/12);
+    cxt[i++]=hash(++n, coef, adv_pred[2]/17,  lcp[(zu<zv)]/24,lcp[2]/20,lcp[3]/24 );
+    cxt[i++]=hash(hc,ccount>1?((zv<<8)|zu):zu,cbuf[cpos-blockN[mcupos>>6]], adv_pred[2]/28, run_pred[2],lcp[1]/14/* art*/ ,    adv_pred[0]/28, run_pred[0],lcp[4]/14/*art*/ ) ;
+    cxt[i++]=hash(++n, (zv<<8)|zu, lcp[0]/22, lcp[4]/30, ssum2>>6,prev_coef/28 ,  adv_pred[0]/30, adv_pred[1]/30,adv_pred[2]/30 ,  run_pred[0], run_pred[1],run_pred[2] );
 
 
+    cxt[i++]=hash(++n,hc, adv_pred[3] / 13, prev_coef / 11, static_cast<int>(zu + zv < 4));
+    cxt[i++] = hash(  n, hc, adv_pred[2] / 13, prev_coef / 11, static_cast<int>(zu + zv < 4));
+    cxt[i++] = hash(  n, hc, adv_pred[1] / 13, prev_coef / 11, static_cast<int>(zu + zv < 4));
+    cxt[i++] = hash(++n, hc, adv_pred[1] / 13, prev_coef2 / 20, prev_coef_rs);
+    cxt[i++] = hash(++n, hc, adv_pred[2] / 13, prev_coef / 40 + ((prev_coef2 / 40) << 20), prev_coef_rs);
+
+    cxt[i++] = hash(++n, hc, adv_pred[0] / 13, prev_coef / 40 + ((prev_coef2 / 40) << 20), static_cast<int>(zu + zv < 4));
+    cxt[i++] = hash(++n, prev_coef2, prev_coef_rs); // for MJPEG files
+    cxt[i++] = hash(++n, hc, run_pred[0] / 13, prev_coef / 11, static_cast<int>(zu + zv < 4));
+    cxt[i++] = hash(++n, hc, adv_pred[2] / 7, run_pred[2]);
+ 
+    cxt[i++] = hash(++n, hc, adv_pred[2] / 12, run_pred[2], ssum2 >> 6, prev_coef / 12);
+    cxt[i++] = hash(++n, hc, adv_pred[1] / 11, run_pred[1], ssum2 >> 6);
+    cxt[i++] = hash(++n, hc, rs1, adv_pred[0] / 7, prev_coef2 / 10);
+    cxt[i++] = hash(++n, hc, lcp[0] / 12, lcp[1] / 12, mcupos & 63U, lcp[4] / 10);
+    cxt[i++] = hash(++n, hc, zu / 2, prev_coef / 40 + ((prev_coef2 / 28) << 20));
+    cxt[i++] = hash(++n, hc, zv / 2, prev_coef / 40 + ((prev_coef2 / 28) << 20));
+    cxt[i++] = hash(++n, hc, column >> 3, min(5 + 2 * static_cast<int>(comp == 0), zu + zv), prev_coef / 40 + ((prev_coef2 / 28) << 20) );
+
+    cxt[i++] = hash(++n, hc, row, min(5 + 2 * static_cast<int>(comp == 0), zu + zv), prev_coef / 40 + ((prev_coef2 / 28) << 20) );
+
+    cxt[i++] = hash(++n, hc, coef, rs, mcupos&63); 
+    cxt[i++] = hash(++n, hc, coef, adv_pred[2] / 12 + (run_pred[2] << 8), ssum2 >> 6);
+    cxt[i++] = hash(++n, hc, coef, adv_pred[0] / 12 + (run_pred[0] << 8), ssum2 >> 6);
+    cxt[i++] = hash(++n, hc, coef, lcp[0] / 12 + (run_pred[0] << 8), ssum2 >> 6);
+
+    cxt[i++] = hash(++n, hc, coef, rs1, adv_pred[2] / 7, run_pred[5] / 2);
+    cxt[i++] = hash(++n, hc, coef, rs1, adv_pred[0] / 7);
+    cxt[i++] = hash(++n, hc, coef, rs1,  cbuf[cpos-blockN[mcupos>>6]]>>4, adv_pred[3] / 17);	
+    cxt[i++]=hash(++n, hc, coef, rs1, cbuf[cpos-blockW[mcupos>>6]]>>4, adv_pred[3]/17);
+
+    cxt[i++]=hash(++n, lcp[1]/22, lcp[2]/22, adv_pred[2]/7, run_pred[2],ccount>1?(lcp[4]/14):-1);
+    cxt[i++]=hash(++n, lcp[0]/22, lcp[1]/22, lcp[4]/22, mcupos&63, lcp[3]/30);
+    cxt[i++]=hash(++n, coef, adv_pred[0]/11,  lcp[(zu<zv)]/(ccount>2?10:(ccount>1?25:50)),lcp[2+3*(zu*zv>1)]/(ccount>2?10:(ccount>1?25:50)),lcp[3+3*(zu*zv>1)]/(ccount>2?10:(ccount>1?25:50)) );//10 art
   }
 
   // Predict next bit
@@ -9655,6 +9705,12 @@ public:
    int colCtx=(width>1024)?(min(1023, column/max(1, width/1024))):column;
    m1.set(colCtx, 1024); 
 
+  m1.set(column >> 3 | min(5 + 2 * static_cast<int>(comp == 0), zu + zv),2048);
+  m1.set( coef |  min(7, zu + zv),2048);
+  m1.set(mcupos,2048);  
+  m1.set(coef | min(3, ilog2(zu + zv)), 2048);
+  m1.set(coef | mcupos | column,2048);
+  
   int pr=m1.p(1,1);
    x.Misses+=x.Misses+((pr0>>11)!=y);
    jmiss+=jmiss+((pr0>>11)!=y);
@@ -9759,12 +9815,19 @@ public:
      m.add(stretch(pr)>>1);
      m.add((pr-2048)>>3);
 
+  pr=apm[26].p(pr, hash(hc&511,  ssum>>3, mcupos&63 )&0x1FFFF    ,y, 1023);
+     m.add(stretch(pr)>>1);
+
+  
   m.set( 1 + (zu+zv<5)+(huffbits>8)*2+firstcol*4, 9 );
   m.set( 1 + (hc&0xFF) + 256*min(3,(zu+zv)/3), 1025 );
   m.set( coef+256*min(3,huffbits/2), 1024 );
   m.set((hc)&511, 512 );
   m.set( buf(1),1024);  
   m.set( (((abs(adv_pred[1]) / 16) & 63U)<<6) |(x.Misses&0x38)|((lcp[zu<zv])!=65535)*4|(comp == 0)*2 |(min(3,ilog2(zu+zv))>1), 4096 );
+  m.set( (((abs(adv_pred[2]) / 16) & 63U)<<6)| (((abs(adv_pred[1]) / 16) & 63U)<<6) | (((abs(lcp[0]) / 16) & 63U)) , 2048 );
+  m.set( (((abs(adv_pred[1]) / 16) & 63U)<<6) |  (((abs(adv_pred[0]) / 16) & 63U)<<6) | (min(3,huffbits)),1024);
+
 
   int colCtx1=(width>64)?(min(63, column/max(1, width/64))):column;
   m.set(colCtx1, 64);
@@ -13536,7 +13599,7 @@ PredictorJPEG(): pr(16384),
   Bypass(false),mixerInputs(0),mixerNets(0),mixerNetsCount(0){
   
   models = new Model*[M_MODEL_COUNT];
-  models[M_RECORD] = new blankModel1(x);
+  models[M_RECORD] = new recordModel1(x);
   models[M_IM8] = new blankModel1(x);
   models[M_IM24] = new blankModel1(x);
   models[M_SPARSE] = new blankModel1(x);
@@ -13545,8 +13608,8 @@ PredictorJPEG(): pr(16384),
   models[M_MATCH] = new matchModel1(x);
   models[M_DISTANCE] = new blankModel1(x);
   models[M_EXE] = new blankModel1(x);
-  models[M_INDIRECT] = new blankModel1(x);
-  models[M_DMC] = new blankModel1(x);
+  models[M_INDIRECT] = new indirectModel1(x);
+  models[M_DMC] = new dmcModel1(x);
   models[M_NEST] = new blankModel1(x);
   models[M_NORMAL] = new normalModel1(x);
   models[M_IM1] = new blankModel1(x);
@@ -13558,7 +13621,7 @@ PredictorJPEG(): pr(16384),
   models[M_LINEAR] = new blankModel1(x);
   models[M_SPARSEMATCH] = new blankModel1(x);
   models[M_SPARSE_Y] = new blankModel1(x);
-  models[M_PPM] =      new blankModel1(x); 
+  models[M_PPM] =         new blankModel1(x); 
   models[M_CHART] =    new blankModel1(x);
   //models[M_LSTM] =         new blankModel1(x);
   // get mixer data from models
@@ -13569,9 +13632,9 @@ PredictorJPEG(): pr(16384),
    }
    // add extra 
    mixerInputs+=3+1+1-3;
-   mixerNets+=        (8+1024)+       256+       256+       256+       256+       1536;
+   mixerNets+=        (8+1024)+       256+       256+       256+       256+       1536+ 1024+ 64 + 256*8 + 256*8 + 256*8;
      
-   mixerNetsCount+=6;
+   mixerNetsCount+=6+1+4;
    // create mixer
    m=new Mixer(mixerInputs,  mixerNets,x, mixerNetsCount,0,3,2); //set  error update rate to 1.5 (3/2), default is 7/1
 }
@@ -13589,6 +13652,11 @@ void update()  {
     m->add(256);
     Bypass=false;
     int ismatch=models[M_MATCH]->p(*m);  // Length of longest matching context
+    int rec=0;
+    rec=models[M_RECORD]->p(*m);
+    models[M_INDIRECT]->p(*m);
+
+    models[M_DMC]->p(*m);
     if (slow==false && (x.Match.length>0xFF || x.Match.bypass)) {//256b
         x.Match.bypass =   Bypass =    true;
         pr= x.Match.bypassprediction;
@@ -13610,6 +13678,14 @@ void update()  {
         m->set(8+ c1 + (x.bpos>5)*256 + ( ((x.c0&((1<<x.bpos)-1))==0) || (x.c0==((2<<x.bpos)-1)) )*512, 8+1024);
         m->set(x.c0, 256);
         m->set(order | ((x.c4>>6)&3)<<3 | (x.bpos==0)<<5 | (c1==c2)<<6 | (1)<<7, 256);
+     
+	    m->set(order+8*(x.c4>>6&3)+32*(x.bpos==0)+64*(c1==c2)+1*128, 1024);
+
+        m->set(order << 3U | x.bpos, 64);
+        m->set((x.bc4&3)*64+c+order*256, 256*8);
+        m->set(256*order + (x.w4&240) + (x.b3>>4), 256*8);
+        m->set((x.w4&255)+256*x.bpos, 256*8);
+
         m->set(c2, 256);
         m->set(c3, 256);
         U8 d=x.c0<<(8-x.bpos);
